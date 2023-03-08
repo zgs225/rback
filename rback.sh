@@ -103,7 +103,12 @@ function do_backup() {
         local dir=$(eval "echo $(jq -r ".backups[$backup_key].local_dir" $CONFIG_FILE)")
 
         if [ -z "${dir}" ]; then
-            l_skip "Backup dir is empty, skip."
+            l_skip "Local dir is empty, skip."
+            continue
+        fi
+
+        if [ ! -d "${dir}" ]; then
+            l_skip "Local dir ${dir} does not exist, skip."
             continue
         fi
 
