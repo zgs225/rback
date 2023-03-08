@@ -45,3 +45,5 @@ rback.sh -c config.json
     ]
 }
 ```
+
+Refer to [Rclone Document](https://rclone.org/docs/) to check more details about providers.
