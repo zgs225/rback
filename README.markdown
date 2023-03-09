@@ -13,6 +13,7 @@ Options:
 
 * `-c config_file`: specify the path of the configuration file. Default is `config.json`.
 * `-h`: show help.
+* `-v`: verbose mode.
 
 ## Dependencies
 
@@ -64,5 +65,5 @@ The config.json file has the following format:
 ```
 
 * `sync_dir`: The local directory to store backup archives. Default is `~/.rback`.
-* `providers`: The list of cloud storage providers used by rclone. Each provider is defined by its name and its specific configurations. Refer to [rclone document](https://rclone.org/docs/) to check more details about providers
+* `providers`: The list of cloud storage providers used by rclone. Each provider is defined by its name and its specific configurations. Refer to [rclone document](https://rclone.org/docs/) to check more details about providers.
 * `backups`: The list of backup directories to be backed up. Each backup is defined by its local directory, its exclusion rules, its inclusion rules, its provider, its remote path, its retention policy, and its bucket name.

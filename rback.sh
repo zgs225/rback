@@ -11,6 +11,7 @@ CLEAR='\033[0m'
 
 CONFIG_FILE="config.json"
 SYNC_DIR="${HOME}/.rback"
+VERBOSE=0
 
 function l_skip() {
     printf "${GRAY}[SKIP] ${@}${CLEAR}\n"
@@ -32,10 +33,17 @@ function l_warn() {
     printf "${YELLOW}[WARN] ${@}${CLEAR}\n"
 }
 
+function l_debug() {
+    if [ $VERBOSE -eq 1 ]; then
+        echo "[DEBU]" $@
+    fi
+}
+
 function usage() {
     echo "Usage: $0 [options]"
     echo "  -c config_file: specify config file, default is config.json"
     echo "  -h: show help"
+    echo "  -v: verbose mode"
 }
 
 function check_dependencies() {
@@ -150,15 +158,15 @@ function do_backup() {
             exclude_str="${exclude_str} --exclude ${e}"
         done
 
-        l_info "Local dir: ${dir}"
-        l_info "Local archived dir: ${backup_dir}"
-        l_info "Exclude: ${exclude}"
-        l_info "Include: ${include}"
-        l_info "Provider: ${provider}"
-        l_info "Bucket: ${bucket}"
-        l_info "Remote Path: ${path}"
-        l_info "Retention: ${retention}"
-        l_info "Tar file: ${tar_file}"
+        l_debug "Local dir: ${dir}"
+        l_debug "Local archived dir: ${backup_dir}"
+        l_debug "Exclude: ${exclude}"
+        l_debug "Include: ${include}"
+        l_debug "Provider: ${provider}"
+        l_debug "Bucket: ${bucket}"
+        l_debug "Remote Path: ${path}"
+        l_debug "Retention: ${retention}"
+        l_debug "Tar file: ${tar_file}"
 
         # create .tar.gz file using exclude, include from dir
         # log tar command
@@ -179,7 +187,52 @@ function do_backup() {
 
         # sync to remote
         l_info "Syncing ${backup_dir} to ${provider}:${bucket}/${path}..."
+
+        # check delta of count of local and remote, if delta is too large, skip
+        local local_count=$(ls ${backup_dir} | wc -l)
+
+        l_debug "Local count: ${local_count}"
+
+        # if local archive dir is empty, skip
+        if [ $local_count -eq 0 ]; then
+            l_warn "Local archive dir is empty, skip."
+            continue
+        fi
+
+        local remote_count=$(rclone ls ${provider}:${bucket}/${path} --config ${rclone_config_path} | wc -l)
+        local delta=$((local_count - remote_count))
+
+        l_debug "Remote count: ${remote_count}"
+        l_debug "Delta: ${delta}"
+
+        # if delta is less than -2, skip
+        if [ $delta -lt -2 ]; then
+            l_warn "Delta is too large, skip."
+            continue
+        fi
+
+        if [ $remote_count -gt 0 ]; then
+            # check date of newest local and remote, if delta is too large, skip
+            local newest_local=$(ls ${backup_dir} | sort -r | head -n 1)
+            local newest_remote=$(rclone ls ${provider}:${bucket}/${path} --config ${rclone_config_path} | sort -r | head -n 1 | awk '{print $2}')
+            local newest_local_date=$(date -d "$(echo $newest_local | cut -d'.' -f1 | awk -F - '{print $1"-"$2"-"$3" "$4":"$5":"$6}')" +%s)
+            local newest_remote_date=$(date -d "$(echo $newest_remote | cut -d'.' -f1 | awk -F - '{print $1"-"$2"-"$3" "$4":"$5":"$6}')" +%s)
+            local date_delta=$((newest_local_date - newest_remote_date))
+
+            l_debug "Newest local: ${newest_local}"
+            l_debug "Newest remote: ${newest_remote}"
+            l_debug "Newest local date: ${newest_local_date}"
+            l_debug "Newest remote date: ${newest_remote_date}"
+            l_debug "Date delta: ${date_delta}"
+
+            if [ $date_delta -lt 0 ]; then
+                l_warn "Date of newest local is older than newest remote, skip."
+                continue
+            fi
+        fi
+
         rclone sync ${backup_dir} ${provider}:${bucket}/${path} --config ${rclone_config_path}
+
         l_success "Backup ${dir} to ${provider}:${bucket}/${path} done."
     done
 }
@@ -187,7 +240,7 @@ function do_backup() {
 show_usage=0
 
 # get config file opt
-while getopts ":c:h" opt; do
+while getopts ":c:h:v" opt; do
     case $opt in
         c)
             CONFIG_FILE=$OPTARG
@@ -195,6 +248,9 @@ while getopts ":c:h" opt; do
             ;;
         h)
             show_usage=1
+            ;;
+        v)
+            VERBOSE=1
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
