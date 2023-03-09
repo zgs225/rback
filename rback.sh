@@ -200,16 +200,8 @@ function do_backup() {
         fi
 
         local remote_count=$(rclone ls ${provider}:${bucket}/${path} --config ${rclone_config_path} | wc -l)
-        local delta=$((local_count - remote_count))
 
         l_debug "Remote count: ${remote_count}"
-        l_debug "Delta: ${delta}"
-
-        # if delta is less than -2, skip
-        if [ $delta -lt -2 ]; then
-            l_warn "Delta is too large, skip."
-            continue
-        fi
 
         if [ $remote_count -gt 0 ]; then
             # check date of newest local and remote, if delta is too large, skip
