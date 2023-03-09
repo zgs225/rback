@@ -48,7 +48,7 @@ function check_dependencies() {
         l_error "rclone is not installed, please install it first."
         exit 1
     fi
-    l_success "Dependencies check passed."
+    l_info "Dependencies check passed."
 }
 
 # read config file and generate rclone config by providers of config
@@ -79,7 +79,7 @@ function generate_rclone_config() {
         done
     done
 
-    l_success "Rclone config generated."
+    l_info "Rclone config generated."
 }
 
 # get sync dir from config file
@@ -141,19 +141,14 @@ function do_backup() {
             retention=7
         fi
 
-        if [ ! -z "${include}" ] && [ ! -z "${exclude}" ]; then
-            l_error "Include and exclude can not be set at the same time."
-            exit 1
-        fi
-
-        if [ -z "${include}" ] && [ -z "${exclude}" ]; then
-            exclude=".git"
-            l_warn "Include and exclude are empty, using default exclude: ${exclude}"
-        fi
-
         if [ -z "${include}" ]; then
             include="."
         fi
+
+        local exclude_str=""
+        for e in $exclude; do
+            exclude_str="${exclude_str} --exclude ${e}"
+        done
 
         l_info "Local dir: ${dir}"
         l_info "Backup dir: ${backup_dir}"
@@ -167,9 +162,9 @@ function do_backup() {
 
         # create .tar.gz file using exclude, include from dir
         # log tar command
-        l_info "Executing tar -zcvf ${tar_file} -C ${dir} --exclude ${exclude} ${include}"
+        l_info "Executing tar -zcvf ${tar_file} -C ${dir} ${exclude_str} ${include}"
 
-        tar -zcf ${tar_file} -C ${dir} --exclude ${exclude} ${include}
+        tar -zcf ${tar_file} -C ${dir} ${exclude_str} ${include}
 
         # keep last $retention backups
         local backups=$(ls ${backup_dir} | sort -r)
