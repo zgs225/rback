@@ -190,7 +190,6 @@ function do_backup() {
 
         # check delta of count of local and remote, if delta is too large, skip
         local local_count=$(ls ${backup_dir} | wc -l)
-
         l_debug "Local count: ${local_count}"
 
         # if local archive dir is empty, skip
@@ -200,8 +199,21 @@ function do_backup() {
         fi
 
         local remote_count=$(rclone ls ${provider}:${bucket}/${path} --config ${rclone_config_path} | wc -l)
-
         l_debug "Remote count: ${remote_count}"
+
+        local delta=$((local_count - remote_count))
+
+        if [ $retention -lt $remote_count ]; then
+            l_warn "Remote count is larger than retention, may decrease retention or delete some backups manually."
+            delta=$((delta + (remote_count - retention)))
+        fi
+
+        l_debug "Delta: ${delta}"
+
+        if [ $delta -lt -2 ]; then
+            l_warn "Delta is too large, skip."
+            continue
+        fi
 
         if [ $remote_count -gt 0 ]; then
             # check date of newest local and remote, if delta is too large, skip
