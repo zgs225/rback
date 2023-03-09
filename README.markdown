@@ -6,7 +6,7 @@ This is a Bash script to backup local directories to remote cloud storage using 
 ## Usage
 
 ``` sh
-./rback.sh [-c config_file] [-h]
+./rback.sh [-c config_file] [-v] [-h]
 ```
 
 Options:
