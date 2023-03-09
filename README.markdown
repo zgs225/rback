@@ -6,12 +6,13 @@ This is a Bash script to backup local directories to remote cloud storage using 
 ## Usage
 
 ``` sh
-./rback.sh [-c config_file] [-v] [-h]
+./rback.sh [-c config_file] [-F] [-v] [-h]
 ```
 
 Options:
 
 * `-c config_file`: specify the path of the configuration file. Default is `config.json`.
+* `-F`: force to push to remote, default is `false`.
 * `-h`: show help.
 * `-v`: verbose mode.
 

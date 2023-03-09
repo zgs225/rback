@@ -12,6 +12,7 @@ CLEAR='\033[0m'
 CONFIG_FILE="config.json"
 SYNC_DIR="${HOME}/.rback"
 VERBOSE=0
+FORCE=0
 
 function l_skip() {
     printf "${GRAY}[SKIP] ${@}${CLEAR}\n"
@@ -42,6 +43,7 @@ function l_debug() {
 function usage() {
     echo "Usage: $0 [options]"
     echo "  -c config_file: specify config file, default is config.json"
+    echo "  -F: force to push to remote, default is false"
     echo "  -h: show help"
     echo "  -v: verbose mode"
 }
@@ -210,8 +212,8 @@ function do_backup() {
 
         l_debug "Delta: ${delta}"
 
-        if [ $delta -lt -2 ]; then
-            l_warn "Delta is too large, skip."
+        if [ $delta -lt -2 ] && [ $FORCE -eq 0 ]; then
+            l_warn "Delta is too large, please check your config file or use -F to force sync."
             continue
         fi
 
@@ -229,8 +231,8 @@ function do_backup() {
             l_debug "Newest remote date: ${newest_remote_date}"
             l_debug "Date delta: ${date_delta}"
 
-            if [ $date_delta -lt 0 ]; then
-                l_warn "Date of newest local is older than newest remote, skip."
+            if [ $date_delta -lt 0 ] && [ $FORCE -eq 0 ]; then
+                l_warn "Date delta is too large, please check your config file or use -F to force sync."
                 continue
             fi
         fi
@@ -244,7 +246,7 @@ function do_backup() {
 show_usage=0
 
 # get config file opt
-while getopts ":c:h:v" opt; do
+while getopts "c:hvF" opt; do
     case $opt in
         c)
             CONFIG_FILE=$OPTARG
@@ -255,6 +257,9 @@ while getopts ":c:h:v" opt; do
             ;;
         v)
             VERBOSE=1
+            ;;
+        F)
+            FORCE=1
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
