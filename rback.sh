@@ -151,7 +151,7 @@ function do_backup() {
         done
 
         l_info "Local dir: ${dir}"
-        l_info "Backup dir: ${backup_dir}"
+        l_info "Local archived dir: ${backup_dir}"
         l_info "Exclude: ${exclude}"
         l_info "Include: ${include}"
         l_info "Provider: ${provider}"
