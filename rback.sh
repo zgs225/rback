@@ -1,7 +1,9 @@
 #!/bin/bash
 
-AUTHOR="yuez"
-EMAIL="i@yuez.me"
+# rback - A simple backup tool based on rclone
+# Author: yuez
+# Email: i@yuez.me
+# Download this script from: https://raw.githubusercontent.com/zgs225/rback/main/rback.sh
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,6 +15,8 @@ CONFIG_FILE="config.json"
 SYNC_DIR="${HOME}/.rback"
 VERBOSE=0
 FORCE=0
+SHOW_USAGE=0
+
 
 function l_skip() {
     printf "${GRAY}[SKIP] ${@}${CLEAR}\n"
@@ -170,10 +174,9 @@ function do_backup() {
         l_debug "Retention: ${retention}"
         l_debug "Tar file: ${tar_file}"
 
-        # create .tar.gz file using exclude, include from dir
         # log tar command
-        l_info "Executing tar -zcvf ${tar_file} -C ${dir} ${exclude_str} ${include}"
-
+        l_info "Executing tar -zcf ${tar_file} -C ${dir} ${exclude_str} ${include}"
+        # create .tar.gz file using exclude, include from dir
         tar -zcf ${tar_file} -C ${dir} ${exclude_str} ${include}
 
         # keep last $retention backups
@@ -243,8 +246,6 @@ function do_backup() {
     done
 }
 
-show_usage=0
-
 # get config file opt
 while getopts "c:hvF" opt; do
     case $opt in
@@ -253,7 +254,7 @@ while getopts "c:hvF" opt; do
             l_info "Using config file: $CONFIG_FILE"
             ;;
         h)
-            show_usage=1
+            SHOW_USAGE=1
             ;;
         v)
             VERBOSE=1
@@ -267,7 +268,7 @@ while getopts "c:hvF" opt; do
     esac
 done
 
-if [ $show_usage -eq 1 ]; then
+if [ $SHOW_USAGE -eq 1 ]; then
     usage
     exit 0
 fi
